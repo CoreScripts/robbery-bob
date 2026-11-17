@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+  <title>Robbery Bob</title>
+  <style>
+    body,
+    html {
+      margin: 0;
+      overflow: hidden;
+      background: #231F20;
+    }
+
+    canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="unity-container" class="unity-desktop">
+    <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
+  </div>
+
+  <script>
+    const container = document.querySelector("#unity-container");
+    const canvas = document.querySelector("#unity-canvas");
+
+    function sendParentMessage(event, data) {
+      try {
+        window.top.postMessage({ event: event, message: data }, '*');
+      } catch (e) { /* ignore */ }
+    }
+
+    const config = {
+      dataUrl: "Build/game.data",
+      frameworkUrl: "Build/framework.js",
+      codeUrl: "Build/game.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "play.unity.com",
+      productName: "Robbery Bob",
+      productVersion: "1.0",
+      graphicsAPI: ["WebGL 1.0"],
+      webglContextAttributes: { preserveDrawingBuffer: false },
+      splashScreenStyle: "Dark",
+      backgroundColor: "#231F20",
+      developmentBuild: false,
+      multithreading: false,
+      unityVersion: "2019.3.15f1"
+    };
+
+    function loadScript(url) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = url;
+        script.onload = () => resolve();
+        script.onerror = (e) => reject(e);
+        document.body.appendChild(script);
+      });
+    }
+
+    loadScript("Build/loader.js").then(() => {
+      createUnityInstance(canvas, config, (progress) => {
+        sendParentMessage('progress', { progress: progress });
+      }).then((instance) => {
+        window.gameInstance = instance;
+        sendParentMessage('ready', {});
+      }).catch((error) => {
+        console.error(error);
+        sendParentMessage('error', { error: String(error) });
+      });
+    }).catch((error) => {
+      console.error("Failed to load loader.js", error);
+    });
+  </script>
+</body>
+
+</html>
